@@ -1,5 +1,4 @@
 <?php
-
 function getAuthorizationHeader(){
     $headers = null;
     if (isset($_SERVER['Authorization'])) {
@@ -34,6 +33,16 @@ function getBearerToken() {
     return null;
 }
 
+class UndefinedError extends Error {
+	public function __construct(string $message, int $code = 0, Throwable $previous = null) {
+		parent::__construct("Array key '$message' not defined.", $code, $previous);
+	}
+
+	public function __toString() {
+        return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
+    }
+}
+
 class App {
 	public $route;
 	public $method;
@@ -42,8 +51,6 @@ class App {
 	private array $regexes = [];
 
 	public function __construct(bool $useDefaultHtaccess = true) {
-		$this->route = $_SERVER["ORIG_PATH_INFO"];
-		$this->method = $_SERVER["REQUEST_METHOD"];
 		if (!$useDefaultHtaccess) {
 			// The user is not using the default .htaccess file, this means that some variables might not be set correctly.
 			// The user MUST manually override following variables in order for this app to function.
@@ -51,6 +58,9 @@ class App {
 			// string $this->method Defines the request method that was used, should work even when not changed manually. (Default: $_SERVER["REQUEST_METHOD"])
 
 
+		} else {
+			$this->route = isset($_SERVER["ORIG_PATH_INFO"]) ? $_SERVER["ORIG_PATH_INFO"] : throw new UndefinedError("ORIG_PATH_INFO");
+			$this->method = isset($_SERVER["REQUEST_METHOD"]) ? $_SERVER["REQUEST_METHOD"] : throw new UndefinedError("REQUEST_METHOD");
 		}
 	}
 
@@ -157,15 +167,4 @@ class App {
 			throw new Error("Unknown authentication method");
 		}
 	}
-}
-
-
-
-
-
-$__defaultRouter = new App();
-global $__defaultRouter;
-
-function app(): App {
-	return $GLOBALS["__defaultRouter"];
 }

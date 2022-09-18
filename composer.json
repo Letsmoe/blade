@@ -1,18 +1,16 @@
 {
-    "name": "letsmoe/blade",
-    "description": "Minimal PHP routing and API development.",
-    "type": "library",
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Letsmoe\\Blade\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Letsmoe"
-        }
-    ],
-    "minimum-stability": "stable",
-    "require": {}
+	"name": "letsmoe/blade",
+	"description": "Lightweight API framework including caching, routing and database access.",
+	"type": "library",
+	"license": "MIT",
+	"autoload": {
+		"classmap": ["src"]
+	},
+	"authors": [
+		{
+			"name": "Letsmoe"
+		}
+	],
+	"minimum-stability": "stable",
+	"require": {}
 }

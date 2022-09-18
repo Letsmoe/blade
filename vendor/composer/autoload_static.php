@@ -6,29 +6,18 @@ namespace Composer\Autoload;
 
 class ComposerStaticInitcd65991adc7a64aa50aecc073e0d22cb
 {
-    public static $prefixLengthsPsr4 = array (
-        'L' => 
-        array (
-            'Letsmoe\\Blade\\' => 14,
-        ),
-    );
-
-    public static $prefixDirsPsr4 = array (
-        'Letsmoe\\Blade\\' => 
-        array (
-            0 => __DIR__ . '/../..' . '/src',
-        ),
-    );
-
     public static $classMap = array (
+        'App' => __DIR__ . '/../..' . '/src/App.php',
+        'Cache' => __DIR__ . '/../..' . '/src/Cache.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'Database' => __DIR__ . '/../..' . '/src/Database.php',
+        'Response' => __DIR__ . '/../..' . '/src/Response.php',
+        'UndefinedError' => __DIR__ . '/../..' . '/src/App.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitcd65991adc7a64aa50aecc073e0d22cb::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitcd65991adc7a64aa50aecc073e0d22cb::$prefixDirsPsr4;
             $loader->classMap = ComposerStaticInitcd65991adc7a64aa50aecc073e0d22cb::$classMap;
 
         }, null, ClassLoader::class);

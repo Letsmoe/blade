@@ -1,6 +1,5 @@
 <?php
 
-
 function path_join(string ...$paths) {
 	return join("/", array_filter(array_map(function ($path) {
 		return trim($path, "/");

@@ -1,12 +1,5 @@
 <?php
 
-namespace Letsmoe\Blade;
-require "./vendor/autoload.php";
-require "./src/Blade.php";
+require_once "./vendor/autoload.php";
 
-app()->get("/blade/([0-9]+)", function($id) {
-	echo $id;
-	echo app()->args();
-});
-
-app()->run();
+echo new App();

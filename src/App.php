@@ -33,6 +33,16 @@ function getBearerToken() {
     return null;
 }
 
+function getAuthInfo() {
+	$header = getAuthorizationHeader();
+	$auth_array = explode(" ", $header);
+	$username_password = explode(":", base64_decode($auth_array[1]));
+	$username = $username_password[0];
+	$password = $username_password[1];
+
+	return ["username" => $username, "password" => $password];
+}
+
 class UndefinedError extends Error {
 	public function __construct(string $message, int $code = 0, Throwable $previous = null) {
 		parent::__construct("Array key '$message' not defined.", $code, $previous);
@@ -59,8 +69,16 @@ class App {
 
 
 		} else {
-			$this->route = isset($_SERVER["ORIG_PATH_INFO"]) ? $_SERVER["ORIG_PATH_INFO"] : throw new UndefinedError("ORIG_PATH_INFO");
-			$this->method = isset($_SERVER["REQUEST_METHOD"]) ? $_SERVER["REQUEST_METHOD"] : throw new UndefinedError("REQUEST_METHOD");
+			if (isset($_SERVER["ORIG_PATH_INFO"])) {
+				$this->route = $_SERVER["ORIG_PATH_INFO"];
+			} else {
+				throw new UndefinedError("ORIG_PATH_INFO");
+			}
+			if (isset($_SERVER["REQUEST_METHOD"])) {
+				$this->method = $_SERVER["REQUEST_METHOD"];
+			} else {
+				throw new UndefinedError("REQUEST_METHOD");
+			}
 		}
 	}
 
@@ -153,15 +171,26 @@ class App {
 	}
 
 	public const BEARER_VALIDATION = -1;
+	public const BASIC_VALIDATION = -2;
 
-	public function authorize(int $method = App::BEARER_VALIDATION, string | Closure $callback) {
-		if ($method == App::BEARER_VALIDATION) {
+	public function authorize(int $method = self::BEARER_VALIDATION, string | Closure $callback) {
+		if ($method == self::BEARER_VALIDATION) {
 			$token = getBearerToken();
 
 			if ($result = $callback($token)) {
 				return $result;
 			} else {
-				throw new Error("Bearer authentication failed, token is invalid.");
+				$this->plain("Bearer Authentication failed, token is invalid.");
+				die();
+			}
+		} else if ($method == self::BASIC_VALIDATION) {
+			["username" => $username, "password" => $password] = getAuthInfo();
+
+			if ($result = $callback($username, $password)) {
+				return $result;
+			} else {
+				$this->plain("Basic Authentication failed, username or password is invalid.");
+				die();
 			}
 		} else {
 			throw new Error("Unknown authentication method");

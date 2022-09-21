@@ -35,4 +35,17 @@ class Response {
 		$charset = self::$charset;
 		header("Content-Type: $contentType; charset=$charset");
 	}
+
+	public static function error(string $message = "", int $response_code = 400) {
+		header("Content-Type: application/json; charset=utf-8");
+		http_response_code($response_code);
+		echo json_encode([
+			"status" => $response_code,
+			"message" => $message,
+		]);
+	}
+}
+
+function response() {
+	return new Response;
 }

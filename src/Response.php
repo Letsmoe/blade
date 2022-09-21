@@ -44,6 +44,17 @@ class Response {
 			"message" => $message,
 		]);
 	}
+
+	public static function success($data, int $response_code = 200) {
+		self::setContentType("application/json");
+		self::setCharset("utf-8");
+		self::sendHeader();
+		http_response_code(200);
+		echo json_encode([
+			"status" => $response_code,
+			"data" => $data,
+		]);
+	}
 }
 
 function response() {

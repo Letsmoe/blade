@@ -1,4 +1,6 @@
 RewriteEngine on
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule . https://experiments.continuum-ai.de/blade/index.php [L]
+
+RewriteRule ^(?!public/index)(.*) /public/index/$1 [L]
+
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]

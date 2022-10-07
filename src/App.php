@@ -1,4 +1,8 @@
 <?php
+
+include_once __DIR__ . "/Response.php";
+include_once __DIR__ . "/Request.php";
+
 function getAuthorizationHeader(){
     $headers = null;
     if (isset($_SERVER['Authorization'])) {
@@ -82,16 +86,6 @@ class App {
 		}
 	}
 
-	public function data() {
-		if ($_SERVER["CONTENT_TYPE"] == "application/json") {
-			return json_decode(file_get_contents("php://input"), true);
-		} else if ($_SERVER["REQUEST_METHOD"] == "GET") {
-			return $_GET;
-		} else {
-			return file_get_contents("php://input");
-		}
-	}
-
 	private function addRoute(string $route, string | array | Closure $callback, array $methods = ["GET", "POST"]) {
 		$this->routes[] = array("httpMethods" => $methods, "route" => $route, "callback" => $callback);
 		$this->regexes[] = "#^{$route}\$#";
@@ -127,11 +121,17 @@ class App {
 				}
 
 				if (is_array($route["callback"]) && method_exists($route["callback"][0], $route["callback"][1])) {
-					return call_user_func_array($route["callback"], [...$args]);
+					$result = call_user_func_array($route["callback"], [new Request([...$args]), new Response(), [...$args]]);
 				} else if (is_callable($route["callback"]) || function_exists($route["callback"])) {
-					return call_user_func($route["callback"], ...[...$args]);
+					$result = call_user_func($route["callback"], ...[new Request([...$args]), new Response(), [...$args]]);
 				} else {
 					throw new Error("Unknown function '{$route['callback']}' in route.");
+				}
+
+				if ($result instanceof Response) {
+					$result->sendHeader();
+					$result->sendBody();
+					exit();
 				}
 			}
 
@@ -146,41 +146,48 @@ class App {
 		}
 	}
 
-	/**
-	 * Outputs the given value as json encoded string.
-	 */
-	public function json(mixed $value) {
-		$this->setContentType("application/json");
-		if (is_string($value)) {
-			echo $value;
-		} else {
-			echo json_encode($value);
-		}
-	}
-
-	private function setContentType(string $contentType) {
-		header("Content-Type: $contentType");
-	}
-
-	/**
-	 * Outputs the given value as plain text.
-	 */
-	public function plain(string $value) {
-		$this->setContentType("text/plain");
-		echo $value;
-	}
-
 	public const BEARER_VALIDATION = -1;
 	public const BASIC_VALIDATION = -2;
 
+	/**
+	 * Sends a request to the user's browser to store a new cookie.
+	 * @return App The current App instance.
+	 */
+	public function setCookie(string $name, string $value, int $expires = 86400, string $path = "", string $domain = "", bool $secure = false, bool $httpOnly = false) {
+		setcookie($name, $value, time() + $expires, $path, $domain, $secure);
+		return $this;
+	}
+
+	/**
+	 * Retrieves a cookie from the $_COOKIE superglobal variable.
+	 * @param string $name The name of the cookie to retrieve.
+	 * @return string The cookie value associated with that name.
+	 */
+	public function getCookie(string $name) {
+		return $_COOKIE[$name];
+	}
+
+	public function redirect(string $route, string $redirectRoute, int $redirectCode = 301, array $methods = ["GET", "POST", "PUT", "DELETE", "HEAD"]) {
+		$this->addRoute($route, function($request, $response, $args) use ($redirectCode, $redirectRoute) {
+			// When there were regex matches in the route, we need to pass them to the redirect route in case we want to keep them.
+			$filledRedirectRoute = vsprintf($redirectRoute, $args);
+			header("Location: $filledRedirectRoute", true, $redirectCode);
+			exit();
+		}, $methods);
+	}
+
+
 	public function authorize(int $method = self::BEARER_VALIDATION, string | Closure $callback) {
+		$response = new Response();
 		if ($method == self::BEARER_VALIDATION) {
 			$token = getBearerToken();
 
 			if ($result = $callback($token)) {
 				return $result;
 			} else {
-				$this->plain("Bearer Authentication failed, token is invalid.");
+				$response->plain("Bearer Authentication failed, token is invalid.");
+				$response->sendHeader();
+				$response->sendBody();
 				die();
 			}
 		} else if ($method == self::BASIC_VALIDATION) {
@@ -189,7 +196,9 @@ class App {
 			if ($result = $callback($username, $password)) {
 				return $result;
 			} else {
-				$this->plain("Basic Authentication failed, username or password is invalid.");
+				$response->plain("Basic Authentication failed, username or password is invalid.");
+				$response->sendHeader();
+				$response->sendBody();
 				die();
 			}
 		} else {

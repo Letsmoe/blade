@@ -6,10 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'App' => $baseDir . '/src/App.php',
-    'Cache' => $baseDir . '/src/Cache.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
-    'Database' => $baseDir . '/src/Database.php',
-    'Response' => $baseDir . '/src/Response.php',
-    'UndefinedError' => $baseDir . '/src/App.php',
 );

@@ -2,6 +2,7 @@
 
 include_once __DIR__ . "/Response.php";
 include_once __DIR__ . "/Request.php";
+include_once __DIR__ . "/UndefinedError.php";
 
 function getAuthorizationHeader(){
     $headers = null;
@@ -47,19 +48,9 @@ function getAuthInfo() {
 	return ["username" => $username, "password" => $password];
 }
 
-class UndefinedError extends Error {
-	public function __construct(string $message, int $code = 0, Throwable $previous = null) {
-		parent::__construct("Array key '$message' not defined.", $code, $previous);
-	}
-
-	public function __toString() {
-        return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
-    }
-}
-
 class App {
-	public $route;
-	public $method;
+	public string $route;
+	public string $method;
 
 	private array $routes = [];
 	private array $regexes = [];

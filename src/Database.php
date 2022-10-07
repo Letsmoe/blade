@@ -11,7 +11,7 @@ class Database {
 		$stmt = $this->conn->prepare($query, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
 		if ($stmt) {
 			if ($stmt->execute($params)) {
-				return $stmt->fetchAll();
+				return $stmt;
 			}
 		} else {
 			throw new Error("Error whilst preparing query.");
@@ -19,22 +19,12 @@ class Database {
 	}
 
 	public function one(string $query, array $params = array()) {
-		$stmt = $this->conn->prepare($query, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
-		if ($stmt) {
-			if ($stmt->execute($params)) {
-				return $stmt->fetch();
-			}
-		} else {
-			throw new Error("Error whilst preparing query.");
-		}
+		$stmt = $this->execute($query, $params);
+		return $stmt->fetch();
 	}
 
 	public function insert(string $query, array $params = array()) {
-		$stmt = $this->conn->prepare($query, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
-		if ($stmt) {
-			return $stmt->execute($params);
-		} else {
-			throw new Error("Error whilst preparing query.");
-		}
+		$stmt = $this->execute($query, $params);
+		return $stmt;
 	}
 }

@@ -17,9 +17,11 @@ Blade provides multiple methods for loading a new [App](#app).
 Since Blade relies on a specific form of htaccess, we recommend you use this template:
 ```htaccess
 RewriteEngine on
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule . /your/path/to/index.php [L]
+
+RewriteRule ^(?!/index)(.*) /index/$1 [L]
+
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
 ```
 
 

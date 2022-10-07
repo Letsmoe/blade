@@ -1,8 +1,11 @@
 <?php
 
 include_once __DIR__ . "/App.php";
+include_once __DIR__ . "/Cache.php";
 
 global $__APP__;
+global $__CACHE__;
+$__CACHE__ = new Cache($_SERVER["ORIG_PATH_INFO"]);
 $__APP__ = new App();
 
 /**
@@ -15,4 +18,13 @@ $__APP__ = new App();
  */
 function app() {
 	return $GLOBALS["__APP__"];
+}
+
+/**
+ * A helper function that takes the global $__CACHE__ instance and returns it.
+ * 
+ * @return Cache An instance of the `Cache` class.
+ */
+function cache() {
+	return $GLOBALS["__CACHE__"];
 }

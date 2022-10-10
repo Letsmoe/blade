@@ -2,58 +2,14 @@
 
 include_once __DIR__ . "/Response.php";
 include_once __DIR__ . "/Request.php";
+include_once __DIR__ . "/Authorization.php";
 include_once __DIR__ . "/UndefinedError.php";
-
-function getAuthorizationHeader(){
-    $headers = null;
-    if (isset($_SERVER['Authorization'])) {
-        $headers = trim($_SERVER["Authorization"]);
-    } else if (isset($_SERVER['HTTP_AUTHORIZATION'])) { //Nginx or fast CGI
-        $headers = trim($_SERVER["HTTP_AUTHORIZATION"]);
-    } else if (isset($_SERVER["REDIRECT_HTTP_AUTHORIZATION"])) {
-		$headers = trim($_SERVER["REDIRECT_HTTP_AUTHORIZATION"]);
-	} else if (function_exists('apache_request_headers')) {
-        $requestHeaders = apache_request_headers();
-        // Server-side fix for bug in old Android versions (a nice side-effect of this fix means we don't care about capitalization for Authorization)
-        $requestHeaders = array_combine(array_map('ucwords', array_keys($requestHeaders)), array_values($requestHeaders));
-        //print_r($requestHeaders);
-        if (isset($requestHeaders['Authorization'])) {
-            $headers = trim($requestHeaders['Authorization']);
-        }
-    }
-    return $headers;
-}
-
-/**
- * get access token from header
- * */
-function getBearerToken() {
-    $headers = getAuthorizationHeader();
-    // HEADER: Get the access token from the header
-    if (!empty($headers)) {
-        if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
-            return $matches[1];
-        }
-    }
-    return null;
-}
-
-function getAuthInfo() {
-	$header = getAuthorizationHeader();
-	$auth_array = explode(" ", $header);
-	$username_password = explode(":", base64_decode($auth_array[1]));
-	$username = $username_password[0];
-	$password = $username_password[1];
-
-	return ["username" => $username, "password" => $password];
-}
 
 class App {
 	public string $route;
 	public string $method;
 
 	private array $routes = [];
-	private array $regexes = [];
 
 	public function __construct(bool $useDefaultHtaccess = true) {
 		if (!$useDefaultHtaccess) {
@@ -77,61 +33,64 @@ class App {
 		}
 	}
 
-	private function addRoute(string $route, string | array | Closure $callback, array $methods = ["GET", "POST"]) {
-		$this->routes[] = array("httpMethods" => $methods, "route" => $route, "callback" => $callback);
-		$this->regexes[] = "#^{$route}\$#";
+	private function addRoute(string $route, string | array | callable $callback, array $methods = ["GET", "POST"]) {
+		$this->routes[] = array("httpMethods" => $methods, "route" => $route, "callback" => $callback, "regex" => "#^{$route}\$#");
 	}
 
-	public function get(string $route, string | array | Closure $callback) {
+	public function get(string $route, string | array | callable $callback) {
 		$this->addRoute($route, $callback, ["GET"]);
 	}
 
-	public function post(string $route, string | array | Closure $callback) {
+	public function post(string $route, string | array | callable $callback) {
 		$this->addRoute($route, $callback, ["POST"]);
 	}
 
-	public function put(string $route, string | array | Closure $callback) {
+	public function put(string $route, string | array | callable $callback) {
 		$this->addRoute($route, $callback, ["PUT"]);
 	}
 
-	public function delete(string $route, string | array | Closure $callback) {
+	public function delete(string $route, string | array | callable $callback) {
 		$this->addRoute($route, $callback, ["DELETE"]);
 	}
 
 	public function run(bool $exit = true) {
-		$i = 0;
-		foreach ($this->regexes as $regex) {
+		foreach ($this->routes as $route) {
 			$args = [];
-			if (preg_match($regex, $this->route, $args)) {
-				// $args now contains the full input as first offset. Let's remove that.
-				array_splice($args, 0, 1);
-				$route = $this->routes[$i];
-
-				if (!in_array($this->method, $route["httpMethods"])) {
-					continue;
-				}
-
-				if (is_array($route["callback"]) && method_exists($route["callback"][0], $route["callback"][1])) {
-					$result = call_user_func_array($route["callback"], [new Request([...$args]), new Response(), [...$args]]);
-				} else if (is_callable($route["callback"]) || function_exists($route["callback"])) {
-					$result = call_user_func($route["callback"], ...[new Request([...$args]), new Response(), [...$args]]);
-				} else {
-					throw new Error("Unknown function '{$route['callback']}' in route.");
-				}
-
-				if ($result instanceof Response) {
-					$result->sendHeader();
-					$result->sendBody();
-					exit();
-				}
+			if (!preg_match($route["regex"], $this->route, $args)) {
+				continue;
 			}
 
-			$i++;
+			// $args now contains the full input as first offset. Let's remove that.
+			array_splice($args, 0, 1);
+
+			if (!in_array($this->method, $route["httpMethods"])) {
+				continue;
+			}
+
+			$callback = $route["callback"];
+			$isMethod = is_array($callback) && method_exists($callback[0], $callback[1]);
+
+			if ($isMethod || is_callable($callback) || function_exists($callback)) {
+				$result = call_user_func_array($callback, [new Request([...$args]), new Response(), [...$args]]);
+			} else {
+				throw new Error("Unknown function '{$route['callback']}' in route.");
+			}
+
+			if ($result instanceof Response) {
+				$result->sendHeader();
+				$result->sendBody();
+				exit;
+			} else if ($result instanceof Redirect) {
+				header("Location: " . $result->redirectUrl, true, $result->redirectType);
+				exit;
+			} else if ($result) {
+				return $result;
+			}
 		}
 
 		if ($exit) {
 			header("HTTP/1.0 404 Not Found");
-			die();
+			die;
 		} else {
 			return false;
 		}
@@ -159,41 +118,26 @@ class App {
 	}
 
 	public function redirect(string $route, string $redirectRoute, int $redirectCode = 301, array $methods = ["GET", "POST", "PUT", "DELETE", "HEAD"]) {
-		$this->addRoute($route, function($request, $response, $args) use ($redirectCode, $redirectRoute) {
+		$this->addRoute($route, function(Request $request, Response $response) use ($redirectCode, $redirectRoute) {
 			// When there were regex matches in the route, we need to pass them to the redirect route in case we want to keep them.
+			$args = $request->args();
 			$filledRedirectRoute = vsprintf($redirectRoute, $args);
-			header("Location: $filledRedirectRoute", true, $redirectCode);
-			exit();
+			return $response->withRedirect($filledRedirectRoute, $redirectCode);
 		}, $methods);
 	}
 
 
-	public function authorize(int $method = self::BEARER_VALIDATION, string | Closure $callback) {
+	public function authorize(int $method = self::BEARER_VALIDATION, string | callable $callback) {
+		$provider = new AuthorizationProvider($method);
+		$result = $provider->authorizeRequest($callback);
+
 		$response = new Response();
-		if ($method == self::BEARER_VALIDATION) {
-			$token = getBearerToken();
-
-			if ($result = $callback($token)) {
-				return $result;
-			} else {
-				$response->plain("Bearer Authentication failed, token is invalid.");
-				$response->sendHeader();
-				$response->sendBody();
-				die();
-			}
-		} else if ($method == self::BASIC_VALIDATION) {
-			["username" => $username, "password" => $password] = getAuthInfo();
-
-			if ($result = $callback($username, $password)) {
-				return $result;
-			} else {
-				$response->plain("Basic Authentication failed, username or password is invalid.");
-				$response->sendHeader();
-				$response->sendBody();
-				die();
-			}
-		} else {
-			throw new Error("Unknown authentication method");
+		
+		if ($result) {
+			$response->plain("Fatal error in Authentication.");
+			$response->sendHeader();
+			$response->sendBody();
+			exit;
 		}
 	}
 }

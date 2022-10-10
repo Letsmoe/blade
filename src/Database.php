@@ -15,6 +15,14 @@ class Database {
 		$this->connect();
 	}
 
+	public function __get(string $name): mixed {
+		if (property_exists($this, $name)) {
+			return $this[$name];
+		} else {
+			throw new Error("Error when trying to access invalid property '$name' of " . get_class($this));
+		}
+	}
+
 	public function setHost(string $host): bool {
 		$this->host = $host;
 		return $this->connect();

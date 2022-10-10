@@ -1,5 +1,7 @@
 <?php
 
+include_once __DIR__ . "/Redirect.php";
+
 class Response {
 	public $charset = self::UTF8;
 	public $headers = [];
@@ -30,6 +32,10 @@ class Response {
 	public function withStatus(int $code): Response {
 		$this->responseCode = $code;
 		return $this;
+	}
+
+	public function withRedirect(string $url, int $redirectType = 301): Redirect {
+		return new Redirect($url, $redirectType);
 	}
 
 	public function plain(string $data): Response {

@@ -68,9 +68,14 @@ class Database {
 		}
 	}
 
-	public function one(string $query, array $params = array()) {
+	public function one(string $query, array $params = array(), $mode = PDO::FETCH_ASSOC) {
 		$stmt = $this->execute($query, $params);
-		return $stmt->fetch();
+		return $stmt->fetch($mode);
+	}
+
+	public function all(string $query, array $params = array(), $mode = PDO::FETCH_ASSOC) {
+		$stmt = $this->execute($query, $params);
+		return $stmt->fetchAll($mode);
 	}
 
 	public function insert(string $query, array $params = array()) {

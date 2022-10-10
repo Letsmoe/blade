@@ -2,10 +2,12 @@
 
 include_once "../vendor/autoload.php";
 
-app()->redirect("/([A-z]+)/name", "/%s/18/info", 301);
+// Set the default caching directory.
+cache()->setCacheDir("./cache/");
 
+// Establish a 301 redirect for the given route.
+app()->redirect("/([A-z]+)/name", "/%s/18/info", 301);
 app()->get("/(.*?)/([0-9]+)/info", function($request, $response, $args) {
-	cache()->setCacheDir("./cache/");
 	if (cache()->hasCache() || app()->getCookie("wasCached")) {
 		app()->setCookie("wasCached", true);
 		$data = cache()->dump();

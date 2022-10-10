@@ -1,10 +1,60 @@
 <?php
 
 class Database {
-	public function __construct(string $host, string $username, string $password, string $database, int $port = 22)
+	private $host = null;
+	private $username = null;
+	private $password = null;
+	private $database = null;
+
+	public function __construct(string $host = null, string $username = null, string $password = null, string $database = null)
 	{
-		$this->conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
-		$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		$this->host = $host;
+		$this->username = $username;
+		$this->password = $password;
+		$this->database = $database;
+		$this->connect();
+	}
+
+	public function setHost(string $host): bool {
+		$this->host = $host;
+		return $this->connect();
+	}
+
+	public function setUsername(string $username): bool {
+		$this->username = $username;
+		return $this->connect();
+	}
+
+	public function setPassword(string $password): bool {
+		$this->password = $password;
+		return $this->connect();
+	}
+
+	public function setDatabase(string $database): bool {
+		$this->database = $database;
+		return $this->connect();
+	}
+
+	public function close(): bool {
+		return $this->conn->close();
+	}
+
+	public function reconnect(): bool {
+		$this->conn->close();
+		return $this->connect();
+	}
+
+	/**
+	 * Instantiates a new database connection once all required parameters have been set.
+	 */
+	private function connect(): bool {
+		if ($this->host && $this->username && $this->password && $this->database) {
+			$this->conn = new PDO("mysql:host=$this->host;dbname=$this->database", $this->username, $this->password);
+			$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			return true;
+		}
+
+		return false;
 	}
 
 	public function execute(string $query, array $params = array()) {

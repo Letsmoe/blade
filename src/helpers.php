@@ -2,11 +2,14 @@
 
 include_once __DIR__ . "/App.php";
 include_once __DIR__ . "/Cache.php";
+include_once __DIR__ . "/Database.php";
 
+global $__DB__;
 global $__APP__;
 global $__CACHE__;
 $__CACHE__ = new Cache($_SERVER["ORIG_PATH_INFO"]);
 $__APP__ = new App();
+$__DB__ = new Database();
 
 /**
  * A helper function that takes the global $__APP__ instance and returns it.
@@ -27,4 +30,13 @@ function app() {
  */
 function cache() {
 	return $GLOBALS["__CACHE__"];
+}
+
+/**
+ * A helper function that takes the global $__DB__ instance and returns it.
+ * 
+ * @return Database An instance of the `Database` class.
+ */
+function db() {
+	return $GLOBALS["__DB__"];
 }

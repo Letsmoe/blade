@@ -127,14 +127,14 @@ class App {
 	}
 
 
-	public function authorize(int $method = self::BEARER_VALIDATION, string | callable $callback) {
+	public function authorize(string | callable $callback, int $method = self::BEARER_VALIDATION): mixed {
 		$provider = new AuthorizationProvider($method);
 		$result = $provider->authorizeRequest($callback);
 
 		$response = new Response();
 		
-		if ($result) {
-			$response->plain("Fatal error in Authentication.");
+		if ($result === false) {
+			$response->json(["status" => "error", "errors" => ["Fatal error in authorization."]]);
 			$response->sendHeader();
 			$response->sendBody();
 			exit;

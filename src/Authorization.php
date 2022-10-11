@@ -1,10 +1,7 @@
 <?php
 
 class AuthorizationProvider {
-	const BASIC_AUTHORIZATION = -1;
-	const BEARER_AUTHORIZATION = -2;
-
-	private $type = self::BASIC_AUTHORIZATION;
+	private $type = App::BASIC_VALIDATION;
 
 	public function __construct(int $authorizationType)
 	{
@@ -52,15 +49,15 @@ class AuthorizationProvider {
 		return [$username, $password];
 	}
 
-	public function authorizeRequest(callable $callback) {
-		if ($this->type === self::BASIC_AUTHORIZATION) {
+	public function authorizeRequest(string | callable $callback): mixed {
+		if ($this->type === App::BASIC_VALIDATION) {
 			[$username, $password] = $this->getBasicAuthInfo();
 			// Check whether username as well as password could be found in the authorization header.
 			if (!$username || !$password) {
 				return false;
 			}
 			return $callback($username, $password);
-		} else if ($this->type === self::BEARER_AUTHORIZATION) {
+		} else if ($this->type === App::BEARER_VALIDATION) {
 			$token = $this->getBearerToken();
 			// Check whether a token could be found in the authorization header.
 			if (!$token) {

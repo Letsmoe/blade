@@ -139,5 +139,7 @@ class App {
 			$response->sendBody();
 			exit;
 		}
+
+		return $result;
 	}
 }

@@ -116,23 +116,31 @@ class Response {
 	const PLAIN = "text/plain";
 	const UTF8 = "utf-8";
 
-	public function error(string $message = "", int $response_code = 400): Response {
+	public function status(mixed $data, int $status_code = 0) {
 		$this->withCharset(self::UTF8);
 		$this->withContentType(self::JSON);
-		$this->withStatus($response_code);
 		$this->data = json_encode([
-			"status" => $response_code,
-			"message" => $message,
+			"status" => $status_code,
+			"data" => $data
 		]);
 		return $this;
 	}
 
-	public function success($data, int $response_code = 200): Response {
+	public function error(array $errors = []): Response {
+		$this->withCharset(self::UTF8);
+		$this->withContentType(self::JSON);
+		$this->data = json_encode([
+			"success" => false,
+			"errors" => $errors
+		]);
+		return $this;
+	}
+
+	public function success($data): Response {
 		$this->withContentType(self::JSON);
 		$this->withCharset(self::UTF8);
-		$this->withStatus($response_code);
 		$this->data = json_encode([
-			"status" => $response_code,
+			"success" => true,
 			"data" => $data,
 		]);
 		return $this;

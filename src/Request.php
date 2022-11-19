@@ -16,6 +16,13 @@ class Request {
 		}
 	}
 
+	public function server(string | bool $property = false): mixed {
+		if ($property) {
+			return $_SERVER[$property];
+		}
+		return $_SERVER;
+	}
+
 	/**
 	 * Returns the current request uri.
 	 * @return string The request path.

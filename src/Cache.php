@@ -11,7 +11,7 @@ class Cache {
 	public $dir = "./";
 	public $ttl = 86400;
 	private $current_page = "";
-	public function __construct(string $page) {
+	public function __construct(string $page = "") {
 		$this->current_page = hash("md5", $page);
 	}
 

@@ -52,3 +52,5 @@ function db(): Database {
 function session(): Session {
 	return $GLOBALS["__SESSION__"];
 }
+
+define("APP_REDIRECT_UNMATCHED_ROUTES", -1);

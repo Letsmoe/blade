@@ -6,8 +6,8 @@ include_once "../vendor/autoload.php";
 cache()->setCacheDir("./cache/");
 
 // Establish a 301 redirect for the given route.
-app()->redirect("/([A-z]+)/name", "/%s/18/info", 301);
-app()->get("/(.*?)/([0-9]+)/info", function($request, $response, $args) {
+app()->redirect("/([A-z]+)/name/", "/%s/18/info", 301);
+app()->get("/(.*?)/([0-9]+)/info/", function($request, $response, $args) {
 	if (cache()->hasCache() || app()->getCookie("wasCached")) {
 		app()->setCookie("wasCached", true);
 		$data = cache()->dump();
@@ -23,6 +23,9 @@ app()->get("/(.*?)/([0-9]+)/info", function($request, $response, $args) {
 
 	return $response->plain(json_encode(["name" => $name, "age" => $age, "url" => $request->getRoute()]));
 });
+
+app()->setBaseFolder("./shared/");
+app()->setOption(APP_REDIRECT_UNMATCHED_ROUTES, true);
 
 app()->run();
 

@@ -1,18 +1,32 @@
-# The Response Object
-The Blade Framework implements it's own representation of the [PSR-7 Response Object](https://www.php-fig.org/psr/psr-7/) to guarantee compatibility and execution speed.
-Once the callback to a route has been called, a [Request Object](../request/README.md) and a Response Object will be passed as parameters.
-A Response Object is used to handle all answers to a given request depending on the resource that has been requested.
-In contrast to the official PSR-7 specification, the Response Object introduced by Blade is created only once. Every setting that is being changed will be affected globally. The Response Object is not supposed to be cloned since it is only valid for a specific request.
+# Blade Response
+The Response object is a simple wrapper for interacting with the output of your Application, you can set **headers** or modify the **response content** easily.
+
+<hr>
+
+## Usage
+The response object is passed to your active route via a function parameter.
 
 ```php
-app()->get("/api/v1/resource/", function(Request $request, Response $response) {
-	return $response->json([
-		"status" => "success",
-		"data" => [
-			"name" => "..."
-		]
-	])->withStatus(200);
-});
+app()->get("/index/", function(Request $request, Response $response) {
+	$data = $request->data();
+	$args = request()->args();
 
-app()->run();
+	// Return the response object to send output to your user.
+	return $response->json($data);
+})
 ```
+
+There are two ways to access the `Response` object. You may either call the `response()` function which will return the global `response` instance, or you can use the `$response` variable which is passed to your current route as a parameter.
+
+#### Please Note
+
+When using the response object in a global scope, the output will **not** be sent to the user automatically!
+
+If you want to send output to a user, you will need to call these commands on the response object:
+
+```php
+response()->sendHeader();
+response()->sendBody();
+```
+
+The output of a route will **not** be used automatically either! If you want to output content from a route you need to **return the response object** like in the example above.

@@ -9,10 +9,22 @@ global $__DB__;
 global $__APP__;
 global $__SESSION__;
 global $__CACHE__;
+global $__REQUEST__;
+global $__RESPONSE__;
+$__REQUEST__ = new Request([]);
+$__RESPONSE__ = new Response();
 $__SESSION__ = new Session();
 $__CACHE__ = new Cache($_SERVER["ORIG_PATH_INFO"]);
 $__APP__ = new App();
 $__DB__ = new Database();
+
+function request(): Request {
+	return $GLOBALS["__REQUEST__"];
+}
+
+function response(): Response {
+	return $GLOBALS["__RESPONSE__"];
+}
 
 /**
  * A helper function that takes the global $__APP__ instance and returns it.
@@ -53,4 +65,4 @@ function session(): Session {
 	return $GLOBALS["__SESSION__"];
 }
 
-define("APP_REDIRECT_UNMATCHED_ROUTES", -1);
+define("APP_REDIRECT_UNMATCHED_ROUTES", 1);

@@ -95,7 +95,8 @@ class App
 			$isMethod = is_array($callback) && method_exists($callback[0], $callback[1]);
 
 			if ($isMethod || is_callable($callback) || function_exists($callback)) {
-				$result = call_user_func_array($callback, [new Request([...$args]), new Response(), [...$args]]);
+				request()->setArgs([...$args]);
+				$result = call_user_func_array($callback, [request(), response(), [...$args]]);
 			} else {
 				throw new Error("Unknown function '{$route['callback']}' in route.");
 			}
@@ -154,7 +155,7 @@ class App
 
 		if ($exit) {
 			header("HTTP/1.0 404 Not Found");
-			die;
+			exit;
 		} else {
 			return false;
 		}

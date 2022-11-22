@@ -6,6 +6,10 @@ class Request {
 		$this->args = $args;
 	}
 
+	public function setArgs(array $args) {
+		$this->args = $args;
+	}
+
 	public function data() {
 		if ($_SERVER["CONTENT_TYPE"] == "application/json") {
 			return json_decode(file_get_contents("php://input"), true);

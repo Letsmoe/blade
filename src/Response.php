@@ -107,6 +107,13 @@ class Response {
 		header($headerString . "; charset=$this->charset");
 	}
 
+	public function __toString()
+	{
+		$this->sendHeader();
+		$this->sendBody();
+		return null;
+	}
+
 	public function sendBody() {
 		echo $this->data;
 	}

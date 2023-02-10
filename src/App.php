@@ -3,7 +3,6 @@
 include_once __DIR__ . "/Response.php";
 include_once __DIR__ . "/Request.php";
 include_once __DIR__ . "/Authorization.php";
-include_once __DIR__ . "/UndefinedError.php";
 
 class App
 {
@@ -21,18 +20,16 @@ class App
 			// The user MUST manually override following variables in order for this app to function.
 			// string $this->route Defines the route the user used to access the current document. (Default: $_SERVER["ORIG_PATH_INFO"])
 			// string $this->method Defines the request method that was used, should work even when not changed manually. (Default: $_SERVER["REQUEST_METHOD"])
-
-
 		} else {
-			if (isset($_SERVER["ORIG_PATH_INFO"])) {
-				$this->route = $_SERVER["ORIG_PATH_INFO"];
+			if (isset($_GET["url"])) {
+				$this->route = $_GET["url"];
 			} else {
-				throw new UndefinedError("ORIG_PATH_INFO");
+				throw new Error("Missing required GET parameter `url`");
 			}
 			if (isset($_SERVER["REQUEST_METHOD"])) {
 				$this->method = $_SERVER["REQUEST_METHOD"];
 			} else {
-				throw new UndefinedError("REQUEST_METHOD");
+				throw new Error("Missing REQUEST_METHOD");
 			}
 		}
 	}
@@ -71,7 +68,7 @@ class App
 	{
 		// Check if the given folder exists.
 		if (!realpath($folder)) {
-			throw new Error("Unmatched base folder: '$folder' does not exist.");
+			throw new Error("Base folder: '$folder' does not exist.");
 		}
 		$this->base_folder = realpath($folder);
 	}
@@ -102,8 +99,7 @@ class App
 			}
 
 			if ($result instanceof Response) {
-				$result->sendHeader();
-				$result->sendBody();
+				echo $result;
 				exit;
 			} else if ($result instanceof Redirect) {
 				header("Location: " . $result->redirectUrl, true, $result->redirectType);
@@ -204,8 +200,7 @@ class App
 
 		if ($result === false) {
 			$response->json(["status" => "error", "errors" => ["Fatal error in authorization."]]);
-			$response->sendHeader();
-			$response->sendBody();
+			echo $response;
 			exit;
 		}
 
